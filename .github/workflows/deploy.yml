@@ -18,8 +18,7 @@ on:
         type: string
       sam_params_repo_path:
         description: "The path from the repository root to your SAM parameter config file"
-        required: true
-        default: "sam-params/st-us-east-1.cfg"
+        required: false
         type: string
       extra_sam_args:
         description: "Extra SAM arguments to apply."
@@ -76,7 +75,17 @@ jobs:
         run: |
           sam build --use-container ${{ secrets.EXTRA_SAM_BUILD_ARGS }}
 
-      - name: SAM Deploy
+      - name: SAM Deploy (no parameter overrides)
+        if: inputs.sam_params_repo_path == ''
+        run: |
+          sam deploy \
+            ${{ inputs.extra_sam_args }} \
+            --stack-name ${{ inputs.stack_name }} \
+            --s3-bucket ${{ inputs.s3_bucket }} \
+            --region ${{ inputs.region }}
+
+      - name: SAM Deploy (with parameter overrides)
+        if: inputs.sam_params_repo_path != ''
         run: |
           sam deploy \
             ${{ inputs.extra_sam_args }} \
@@ -142,4 +151,3 @@ jobs:
             <@${{ steps.find-slack-user.outputs.member-id }}>: <${{ env.RUN_URL }}|${{ env.COMMIT_TITLE }}> has failed.
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
