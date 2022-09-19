@@ -75,24 +75,17 @@ jobs:
         run: |
           sam build --use-container ${{ secrets.EXTRA_SAM_BUILD_ARGS }}
 
-      - name: SAM Deploy (no parameter overrides)
-        if: inputs.sam_params_repo_path == ''
+      - name: SAM Deploy
         run: |
-          sam deploy \
-            ${{ inputs.extra_sam_args }} \
-            --stack-name ${{ inputs.stack_name }} \
-            --s3-bucket ${{ inputs.s3_bucket }} \
-            --region ${{ inputs.region }}
-
-      - name: SAM Deploy (with parameter overrides)
-        if: inputs.sam_params_repo_path != ''
-        run: |
+          if [[ "x" == "x${{ inputs.sam_params_repo_path }}" ]]; then
+            PARAMETER_OVERRIDES="--parameters-overides $( < "${{ inputs.sam_params_repo_path}}" )"
+          fi
           sam deploy \
             ${{ inputs.extra_sam_args }} \
             --stack-name ${{ inputs.stack_name }} \
             --s3-bucket ${{ inputs.s3_bucket }} \
             --region ${{ inputs.region }} \
-            --parameter-overrides $( < "${{ inputs.sam_params_repo_path}}" )
+            ${PARAMETER_OVERRIDES}
 
       - name: Cleanup AWS Credentials
         run: rm -rf .aws
